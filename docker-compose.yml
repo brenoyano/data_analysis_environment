@@ -1,0 +1,47 @@
+version: "3.2"
+
+services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - ./pgdata/:/var/lib/postgresql/data
+    ports:
+      - "5439:5432"
+    networks:
+      - backend
+  environment:
+    build: .
+    command: /bin/bash -c "cd workspace && jupyter lab --no-browser --ip=* --port=8888 --allow-root --NotebookApp.token=''"
+    volumes:
+      - ./workspace/:/workspace
+    ports:
+      - "8895:8888"
+    networks:
+      - backend
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./metabase-data/:/metabase-data
+    networks:
+      - backend
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: postgres
+      MB_DB_PORT: 5432
+      MB_DB_USER: postgres
+      MB_DB_PASS: postgres
+      MB_DB_HOST: postgres
+    depends_on:
+      - postgres
+    links:
+      - postgres
+
+networks:
+  backend:
+    driver: "bridge"
